@@ -54,53 +54,19 @@ type ViewBoolCb        = View -> IO Bool
 type ViewFocusCb       = View -> Bool -> IO ()
 type ViewMoveCb        = View -> Output -> Output -> IO ()
 type ViewReqGeomCb     = View -> Geometry -> IO ()
-type ViewReqStateCb    = View -> ViewStateMask -> Bool -> IO ()
+type ViewReqStateCb    = View -> BitSet ViewState -> Bool -> IO ()
 type ViewReqMoveCb     = View -> Point -> IO ()
-type ViewReqResizeCb   = View -> EdgeMask -> Point -> IO ()
-type ViewPropsUpdateCb = View -> ViewPropertyMask -> IO ()
-$(mkWrapFun ''OutputNilCb)
-$(mkWrapFun ''OutputBoolCb)
-$(mkWrapFun ''OutputFocusCb)
--- manual   ''OutputResCb
-$(mkWrapFun ''ViewNilCb)
-$(mkWrapFun ''ViewBoolCb)
-$(mkWrapFun ''ViewFocusCb)
-$(mkWrapFun ''ViewMoveCb)
--- manual   ''ViewReqGeomCb
--- manual   ''ViewReqStateCb
--- manual   ''ViewReqMoveCb
--- manual   ''ViewReqResizeCb
--- manual   ''ViewPropsUpdateCb
-
-foreign import ccall "wrapper" wrapOutputResCb :: CFun OutputResCb -> IO (FunPtr (CFun OutputResCb))
-instance WrapFun OutputResCb where
-  type CFun OutputResCb = Output -> Ptr Size -> Ptr Size -> IO ()
-  wrapFun fn = wrapOutputResCb $ \out oldS newS -> join $ fn out <$> peek oldS <*> peek newS
-
-foreign import ccall "wrapper" wrapViewReqGeomCb :: CFun ViewReqGeomCb -> IO (FunPtr (CFun ViewReqGeomCb))
-instance WrapFun ViewReqGeomCb where
-  type CFun ViewReqGeomCb = View -> Ptr Geometry -> IO ()
-  wrapFun fn = wrapViewReqGeomCb $ \view geom -> fn view =<< peek geom
-
-foreign import ccall "wrapper" wrapViewReqStateCb :: CFun ViewReqStateCb -> IO (FunPtr (CFun ViewReqStateCb))
-instance WrapFun ViewReqStateCb where
-  type CFun ViewReqStateCb = View -> IntEnum -> Bool -> IO ()
-  wrapFun fn = wrapViewReqStateCb $ \view -> fn view . ViewStateMask
-
-foreign import ccall "wrapper" wrapViewReqMoveCb :: CFun ViewReqMoveCb -> IO (FunPtr (CFun ViewReqMoveCb))
-instance WrapFun ViewReqMoveCb where
-  type CFun ViewReqMoveCb = View -> Ptr Point -> IO ()
-  wrapFun fn = wrapViewReqMoveCb $ \view p -> fn view =<< peek p
-
-foreign import ccall "wrapper" wrapViewReqResizeCb :: CFun ViewReqResizeCb -> IO (FunPtr (CFun ViewReqResizeCb))
-instance WrapFun ViewReqResizeCb where
-  type CFun ViewReqResizeCb = View -> IntEnum -> Ptr Point -> IO ()
-  wrapFun fn = wrapViewReqResizeCb $ \view edges p -> fn view (EdgeMask edges) =<< peek p
-
-foreign import ccall "wrapper" wrapViewPropsUpdateCb :: CFun ViewPropsUpdateCb -> IO (FunPtr (CFun ViewPropsUpdateCb))
-instance WrapFun ViewPropsUpdateCb where
-  type CFun ViewPropsUpdateCb = View -> IntEnum -> IO ()
-  wrapFun fn = wrapViewPropsUpdateCb $ \view -> fn view . ViewPropertyMask
+type ViewReqResizeCb   = View -> BitSet Edge -> Point -> IO ()
+type ViewPropsUpdateCb = View -> BitSet ViewProperty -> IO ()
+type KeyboardKeyCb     = View -> Time -> BitSet Mod -> Key -> KeyState -> IO Bool
+type PointerButtonCb   = View -> Time -> BitSet Mod -> Button -> ButtonState -> Point -> IO Bool
+type PointerScrollCb   = View -> Time -> BitSet Mod -> BitSet ScrollAxis -> ScrollAmount -> IO Bool
+type PointerMotionCb   = View -> Time -> Point -> IO Bool
+type TouchCb           = View -> Time -> BitSet Mod -> TouchType -> Slot -> Point -> IO Bool
+type NilCb             = IO ()
+type InputBoolCb       = Input -> IO Bool
+type InputNilCb        = Input -> IO ()
+type LogHandlerCb      = LogType -> String -> IO ()
 
 $(mkCallback' "OutputCreated"          ''OutputBoolCb)
 $(mkCallback' "OutputDestroyed"        ''OutputNilCb)
@@ -121,3 +87,14 @@ $(mkCallback' "ViewRequestResize"      ''ViewReqResizeCb)
 $(mkCallback' "ViewRenderPre"          ''ViewNilCb)
 $(mkCallback' "ViewRenderPost"         ''ViewNilCb)
 $(mkCallback' "ViewPropertiesUpdated"  ''ViewPropsUpdateCb)
+$(mkCallback' "KeyboardKey"            ''KeyboardKeyCb)
+$(mkCallback' "PointerButton"          ''PointerButtonCb)
+$(mkCallback' "PointerScroll"          ''PointerScrollCb)
+$(mkCallback' "PointerMotion"          ''PointerMotionCb)
+$(mkCallback' "Touch"                  ''TouchCb)
+$(mkCallback' "CompositorReady"        ''NilCb)
+$(mkCallback' "CompositorTerminate"    ''NilCb)
+$(mkCallback' "InputCreated"           ''InputBoolCb)
+$(mkCallback' "InputDestroyed"         ''InputNilCb)
+
+$(mkCallback "LogHandler" "wlc_log_set_handler" ''LogHandlerCb)
