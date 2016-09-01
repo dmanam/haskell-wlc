@@ -24,6 +24,16 @@ module Graphics.Wayland.WLC.Callbacks
   , ViewRenderPre
   , ViewRenderPost
   , ViewPropertiesUpdated
+  , KeyboardKey
+  , PointerButton
+  , PointerScroll
+  , PointerMotion
+  , Touch
+  , CompositorReady
+  , CompositorTerminate
+  , InputCreated
+  , InputDestroyed
+  , LogHandler
   , module X
   ) where
 
