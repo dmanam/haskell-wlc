@@ -1,0 +1,31 @@
+name:                  wlc
+version:               0.1.0.0
+synopsis:              Haskell bindings for the wlc Wayland compositor library
+homepage:              https://github.com/dlahoti/haskell-wlc
+license:               GPL-3
+license-file:          LICENSE
+author:                Deven Lahoti
+maintainer:            deven.lahoti@gmail.com
+copyright:             2016
+category:              Graphics
+build-type:            Simple
+cabal-version:         >=1.10
+
+source-repository head
+  type:                git
+  location:            https://github.com/dlahoti/haskell-wlc.git
+
+library
+  exposed-modules:     Graphics.Wayland.WLC,
+                       Graphics.Wayland.WLC.Callbacks
+                       Graphics.Wayland.WLC.Geometry
+                       Graphics.Wayland.WLC.Types
+  other-modules:       Graphics.Wayland.WLC.Callbacks.TH
+                       Graphics.Wayland.WLC.Types.Internal
+  -- other-extensions:
+  build-depends:       base >=4.8,
+                       data-default,
+                       template-haskell
+  pkgconfig-depends:   wlc
+  hs-source-dirs:      src
+  default-language:    Haskell2010
