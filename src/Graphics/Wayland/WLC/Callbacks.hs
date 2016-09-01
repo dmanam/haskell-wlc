@@ -4,13 +4,34 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Graphics.Wayland.WLC.Callbacks
-  (
+  ( CallbackType, Callback, setCallback
+  , OutputCreated
+  , OutputDestroyed
+  , OutputFocus
+  , OutputResolution
+  , OutputRenderPre
+  , OutputRenderPost
+  , OutputContextCreated
+  , OutputContextDestroyed
+  , ViewCreated
+  , ViewDestroyed
+  , ViewFocus
+  , ViewMove
+  , ViewRequestGeometry
+  , ViewRequestState
+  , ViewRequestMove
+  , ViewRequestResize
+  , ViewRenderPre
+  , ViewRenderPost
+  , ViewPropertiesUpdated
+  , module X
   ) where
 
 import Graphics.Wayland.WLC.Callbacks.TH
 
-import Graphics.Wayland.WLC.Geometry
+import Graphics.Wayland.WLC.Geometry as X
 import Graphics.Wayland.WLC.Types.Internal
+import qualified Graphics.Wayland.WLC.Types as X
 
 import Foreign
 import Foreign.C
@@ -22,7 +43,7 @@ setCallback :: (CallbackType cbt, WrapFun (Callback cbt)) => cbt -> Callback cbt
 setCallback cbt f = do
   f' <- wrapFun f
   setCallback' cbt f'
-  return (freeHaskellFunPtr f') -- return the finalizer
+  return (freeHaskellFunPtr f') -- return the finalizer in case they want to change the callback later
 
 type OutputNilCb       = Output -> IO ()
 type OutputBoolCb      = Output -> IO Bool
