@@ -1,7 +1,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE ImpredicativeTypes, RankNTypes #-}
+
 
 module Graphics.Wayland.WLC.Types.Internal where
 
@@ -155,18 +156,16 @@ newtype ScrollAmount = ScrollAmount { unScrollAmount :: (Double, Double) }
 
 data Modifiers = Modifiers (BitSet Led) (BitSet Mod)
 
-data CEventSource
-type EventSource = Ptr CEventSource
-data CXkbState
-type XkbState = Ptr CXkbState
-data CXkbKeymap
-type XkbKeymap = Ptr CXkbKeymap
-data CInput
-type Input = Ptr CInput
-data COutput
-type Output = Ptr COutput
-data CView
-type View = Ptr CView
+#let mkNewPtr name = "newtype %s = %s { un%s :: Ptr () }\ninstance HasMarshalled %s where type Marshalled %s = Ptr ()\ninstance Marshallable %s where marshal = return . un%s\ninstance Unmarshallable %s where unmarshal = return . %s", #name, #name, #name, #name, #name, #name, #name, #name, #name
+#mkNewPtr EventSource
+#mkNewPtr XkbState
+#mkNewPtr XkbKeymap
+#mkNewPtr Input
+#mkNewPtr Output
+#mkNewPtr View
+class (HasMarshalled a, Marshalled a ~ Ptr (), Marshallable a, Unmarshallable a) => Handle a
+instance Handle Output
+instance Handle View
 
 #ifdef __GLASGOW_HASKELL__
 instance Storable Modifiers where
@@ -255,6 +254,13 @@ instance Unmarshallable ScrollAmount where
   unmarshal ptr = do
     [x, y] <- peekArray 2 ptr
     return $ ScrollAmount (x, y)
+
+instance HasMarshalled (StablePtr a) where
+  type Marshalled (StablePtr a) = Ptr ()
+instance Marshallable (StablePtr a) where
+  marshal = return . castStablePtrToPtr
+instance Unmarshallable (StablePtr a) where
+  unmarshal = return . castPtrToStablePtr
 
 #let structMarshal t = "instance HasMarshalled %s where type Marshalled %s = Ptr %s\ninstance Unmarshallable %s where unmarshal = peek", #t, #t, #t, #t
 #structMarshal Modifiers

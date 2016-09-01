@@ -6,6 +6,7 @@ module Graphics.Wayland.WLC.Callbacks.TH
   , CallbackType (..), mkCallback, mkCallback'
   ) where
 
+import Graphics.Wayland.WLC.Internal.TH
 import Graphics.Wayland.WLC.Types.Internal
 
 import Language.Haskell.TH
@@ -30,16 +31,11 @@ mkWrapFun name = do
   TyConI (TySynD name [] t) <- reify name
   let wrapName = mkName $ "wrap" ++ nameBase name
       fnName = mkName "fn"
-      appMarshal t = UInfixE (VarE wrapName) (VarE '($)) $ LamE ps $ UInfixE (VarE 'join) (VarE '($)) expr where
-        (n, expr) = appMarshal' numns t $ AppE (VarE 'pure) (VarE fnName)
-        ps = VarP <$> takeWhile (/= n) numns
-      numns = mkName . ('x':) . show <$> [0..]
-      appMarshal' (n:ns) (AppT (AppT ArrowT _) b) = appMarshal' ns b . \x -> UInfixE x (VarE '(<*>)) $ AppE (VarE 'unmarshal) (VarE n)
-      appMarshal' (n:_) _ = \expr -> (n, expr)
+      wrapper = UInfixE (VarE wrapName) (VarE '($)) $ beforeAfterFnt 'unmarshal 'id fnName t
   return
     [ ForeignD . ImportF CCall Safe "wrapper" wrapName $ AppT (AppT ArrowT $ AppT (ConT ''Marshalled) t) $ AppT (ConT ''IO) $ AppT (ConT ''FunPtr) $ AppT (ConT ''Marshalled) t
     , InstanceD [] (AppT (ConT ''WrapFun) t)
-        [FunD 'wrapFun [Clause [VarP fnName] (NormalB $ appMarshal t) []]]
+        [FunD 'wrapFun [Clause [VarP fnName] (NormalB wrapper) []]]
     ]
 
 mkCallback :: String -> String -> Name -> Q [Dec]

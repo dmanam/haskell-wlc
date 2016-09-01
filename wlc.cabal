@@ -18,9 +18,11 @@ source-repository head
 library
   exposed-modules:     Graphics.Wayland.WLC,
                        Graphics.Wayland.WLC.Callbacks
+                       Graphics.Wayland.WLC.Core
                        Graphics.Wayland.WLC.Geometry
                        Graphics.Wayland.WLC.Types
   other-modules:       Graphics.Wayland.WLC.Callbacks.TH
+                       Graphics.Wayland.WLC.Internal.TH
                        Graphics.Wayland.WLC.Types.Internal
   -- other-extensions:
   build-depends:       base >=4.8,
