@@ -26,10 +26,9 @@ class CallbackType cbt where
   type Callback cbt
   setCallback' :: cbt -> FunPtr (Marshalled (Callback cbt)) -> IO ()
 
-mkWrapFun :: Name -> Q [Dec]
-mkWrapFun name = do
-  TyConI (TySynD name [] t) <- reify name
-  let wrapName = mkName $ "wrap" ++ nameBase name
+mkWrapFun :: String -> Type -> Q [Dec]
+mkWrapFun name t = do
+  let wrapName = mkName $ "wrap" ++ name
       fnName = mkName "fn"
       wrapper = UInfixE (VarE wrapName) (VarE '($)) $ beforeAfterFnt 'unmarshal 'id fnName t
   return
@@ -38,13 +37,13 @@ mkWrapFun name = do
         [FunD 'wrapFun [Clause [VarP fnName] (NormalB wrapper) []]]
     ]
 
-mkCallback :: String -> String -> Name -> Q [Dec]
-mkCallback str cfn fn = do
-  TyConI (TySynD fn [] fnt) <- reify fn
+mkCallback :: String -> String -> Q Type -> Q [Dec]
+mkCallback str cfn fnt' = do
+  fnt <- fnt'
   let name = mkName str
       cName = mkName $ "on" ++ str
   alreadyWrapped <- isInstance ''WrapFun [fnt]
-  wrapper <- if alreadyWrapped then return [] else mkWrapFun fn
+  wrapper <- if alreadyWrapped then return [] else mkWrapFun str fnt
   return $ wrapper ++
     [ ForeignD $ ImportF CCall Safe cfn cName
         $ AppT (AppT ArrowT $ AppT (ConT ''FunPtr) $ AppT (ConT ''Marshalled) fnt) $ AppT (ConT ''IO) $ TupleT 0
@@ -55,7 +54,7 @@ mkCallback str cfn fn = do
         ]
     ]
 
-mkCallback' :: String -> Name -> Q [Dec]
+mkCallback' :: String -> Q Type -> Q [Dec]
 mkCallback' str = mkCallback str cstr where
   cstr = "wlc_set" ++ (replFn =<< str) ++ "_cb"
   replFn c

@@ -46,6 +46,8 @@ import qualified Graphics.Wayland.WLC.Types as X
 import Foreign
 import Foreign.C
 
+import System.Posix.Types (EpochTime)
+
 import Control.Applicative ((<*>))
 import Control.Monad (join)
 
@@ -55,56 +57,33 @@ setCallback cbt f = do
   setCallback' cbt f'
   return (freeHaskellFunPtr f') -- return the finalizer in case they want to change the callback later
 
-type OutputNilCb       = Output -> IO ()
-type OutputBoolCb      = Output -> IO Bool
-type OutputFocusCb     = Output -> Bool -> IO ()
-type OutputResCb       = Output -> Size -> Size -> IO ()
-type ViewNilCb         = View -> IO ()
-type ViewBoolCb        = View -> IO Bool
-type ViewFocusCb       = View -> Bool -> IO ()
-type ViewMoveCb        = View -> Output -> Output -> IO ()
-type ViewReqGeomCb     = View -> Geometry -> IO ()
-type ViewReqStateCb    = View -> BitSet ViewState -> Bool -> IO ()
-type ViewReqMoveCb     = View -> Point -> IO ()
-type ViewReqResizeCb   = View -> BitSet Edge -> Point -> IO ()
-type ViewPropsUpdateCb = View -> BitSet ViewProperty -> IO ()
-type KeyboardKeyCb     = View -> Time -> BitSet Mod -> Key -> KeyState -> IO Bool
-type PointerButtonCb   = View -> Time -> BitSet Mod -> Button -> ButtonState -> Point -> IO Bool
-type PointerScrollCb   = View -> Time -> BitSet Mod -> BitSet ScrollAxis -> ScrollAmount -> IO Bool
-type PointerMotionCb   = View -> Time -> Point -> IO Bool
-type TouchCb           = View -> Time -> BitSet Mod -> TouchType -> Slot -> Point -> IO Bool
-type NilCb             = IO ()
-type InputBoolCb       = Input -> IO Bool
-type InputNilCb        = Input -> IO ()
-type LogHandlerCb      = LogType -> String -> IO ()
+$(mkCallback' "OutputCreated"          [t|Output -> IO Bool|])
+$(mkCallback' "OutputDestroyed"        [t|Output -> IO ()|])
+$(mkCallback' "OutputFocus"            [t|Output -> Bool -> IO ()|])
+$(mkCallback' "OutputResolution"       [t|Output -> Size -> Size -> IO ()|])
+$(mkCallback' "OutputRenderPre"        [t|Output -> IO ()|])
+$(mkCallback' "OutputRenderPost"       [t|Output -> IO ()|])
+$(mkCallback' "OutputContextCreated"   [t|Output -> IO ()|])
+$(mkCallback' "OutputContextDestroyed" [t|Output -> IO ()|])
+$(mkCallback' "ViewCreated"            [t|View -> IO Bool|])
+$(mkCallback' "ViewDestroyed"          [t|View -> IO ()|])
+$(mkCallback' "ViewFocus"              [t|View -> Bool -> IO ()|])
+$(mkCallback' "ViewMove"               [t|View -> Output -> Output -> IO ()|])
+$(mkCallback' "ViewRequestGeometry"    [t|View -> Geometry -> IO ()|])
+$(mkCallback' "ViewRequestState"       [t|View -> BitSet ViewState -> Bool -> IO ()|])
+$(mkCallback' "ViewRequestMove"        [t|View -> Point -> IO ()|])
+$(mkCallback' "ViewRequestResize"      [t|View -> BitSet Edge -> Point -> IO ()|])
+$(mkCallback' "ViewRenderPre"          [t|View -> IO ()|])
+$(mkCallback' "ViewRenderPost"         [t|View -> IO ()|])
+$(mkCallback' "ViewPropertiesUpdated"  [t|View -> BitSet ViewProperty -> IO ()|])
+$(mkCallback' "KeyboardKey"            [t|View -> EpochTime -> BitSet Mod -> Key -> KeyState -> IO Bool|])
+$(mkCallback' "PointerButton"          [t|View -> EpochTime -> BitSet Mod -> Button -> ButtonState -> Point -> IO Bool|])
+$(mkCallback' "PointerScroll"          [t|View -> EpochTime -> BitSet Mod -> BitSet ScrollAxis -> ScrollAmount -> IO Bool|])
+$(mkCallback' "PointerMotion"          [t|View -> EpochTime -> Point -> IO Bool|])
+$(mkCallback' "Touch"                  [t|View -> EpochTime -> BitSet Mod -> TouchType -> Slot -> Point -> IO Bool|])
+$(mkCallback' "CompositorReady"        [t|IO ()|])
+$(mkCallback' "CompositorTerminate"    [t|IO ()|])
+$(mkCallback' "InputCreated"           [t|Input -> IO Bool|])
+$(mkCallback' "InputDestroyed"         [t|Input -> IO ()|])
 
-$(mkCallback' "OutputCreated"          ''OutputBoolCb)
-$(mkCallback' "OutputDestroyed"        ''OutputNilCb)
-$(mkCallback' "OutputFocus"            ''OutputFocusCb)
-$(mkCallback' "OutputResolution"       ''OutputResCb)
-$(mkCallback' "OutputRenderPre"        ''OutputNilCb)
-$(mkCallback' "OutputRenderPost"       ''OutputNilCb)
-$(mkCallback' "OutputContextCreated"   ''OutputNilCb)
-$(mkCallback' "OutputContextDestroyed" ''OutputNilCb)
-$(mkCallback' "ViewCreated"            ''ViewBoolCb)
-$(mkCallback' "ViewDestroyed"          ''ViewNilCb)
-$(mkCallback' "ViewFocus"              ''ViewFocusCb)
-$(mkCallback' "ViewMove"               ''ViewMoveCb)
-$(mkCallback' "ViewRequestGeometry"    ''ViewReqGeomCb)
-$(mkCallback' "ViewRequestState"       ''ViewReqStateCb)
-$(mkCallback' "ViewRequestMove"        ''ViewReqMoveCb)
-$(mkCallback' "ViewRequestResize"      ''ViewReqResizeCb)
-$(mkCallback' "ViewRenderPre"          ''ViewNilCb)
-$(mkCallback' "ViewRenderPost"         ''ViewNilCb)
-$(mkCallback' "ViewPropertiesUpdated"  ''ViewPropsUpdateCb)
-$(mkCallback' "KeyboardKey"            ''KeyboardKeyCb)
-$(mkCallback' "PointerButton"          ''PointerButtonCb)
-$(mkCallback' "PointerScroll"          ''PointerScrollCb)
-$(mkCallback' "PointerMotion"          ''PointerMotionCb)
-$(mkCallback' "Touch"                  ''TouchCb)
-$(mkCallback' "CompositorReady"        ''NilCb)
-$(mkCallback' "CompositorTerminate"    ''NilCb)
-$(mkCallback' "InputCreated"           ''InputBoolCb)
-$(mkCallback' "InputDestroyed"         ''InputNilCb)
-
-$(mkCallback "LogHandler" "wlc_log_set_handler" ''LogHandlerCb)
+$(mkCallback "LogHandler" "wlc_log_set_handler" [t|LogType -> String -> IO ()|])
