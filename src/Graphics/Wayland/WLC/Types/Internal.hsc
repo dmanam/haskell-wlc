@@ -11,9 +11,9 @@ import Graphics.Wayland.WLC.Geometry
 import Foreign
 import Foreign.C
 
-import Control.Monad ((<=<), join)
-
-import Data.Bits
+import System.IO (Handle)
+import System.Posix.IO (handleToFd, fdToHandle)
+import System.Posix.Types (Fd, EpochTime)
 
 #include <wlc/wlc.h>
 #if __GLASGOW_HAKSELL__ < 800
@@ -41,13 +41,13 @@ import Data.Bits
   , backendX11  = WLC_BACKEND_X11
   }
 
-#mkNewtype EventType
-#mkMask EventType
-#{enum EventType, EventType
-  , eventReadable = WLC_EVENT_READABLE
-  , eventWritable = WLC_EVENT_WRITABLE
-  , eventHangup   = WLC_EVENT_HANGUP
-  , eventError    = WLC_EVENT_ERROR
+#mkNewtype FileStatus
+#mkMask FileStatus
+#{enum FileStatus, FileStatus
+  , fileReadable = WLC_EVENT_READABLE
+  , fileWritable = WLC_EVENT_WRITABLE
+  , fileHangup   = WLC_EVENT_HANGUP
+  , fileError    = WLC_EVENT_ERROR
   }
 
 #mkNewtype ViewState
@@ -147,7 +147,6 @@ instance Mask ScrollAxis where
 
 type IntEnumSmall = Word8
 type IntEnum = Word32
-type Time    = Word32
 type Key     = Word32
 type Button  = Word32
 type Slot    = Word32
@@ -157,15 +156,18 @@ newtype ScrollAmount = ScrollAmount { unScrollAmount :: (Double, Double) }
 data Modifiers = Modifiers (BitSet Led) (BitSet Mod)
 
 #let mkNewPtr name = "newtype %s = %s { un%s :: Ptr () }\ninstance HasMarshalled %s where type Marshalled %s = Ptr ()\ninstance Marshallable %s where marshal = return . un%s\ninstance Unmarshallable %s where unmarshal = return . %s", #name, #name, #name, #name, #name, #name, #name, #name, #name
-#mkNewPtr EventSource
 #mkNewPtr XkbState
 #mkNewPtr XkbKeymap
 #mkNewPtr Input
 #mkNewPtr Output
 #mkNewPtr View
-class (HasMarshalled a, Marshalled a ~ Ptr (), Marshallable a, Unmarshallable a) => Handle a
-instance Handle Output
-instance Handle View
+
+data FileEvent = FileEvent (Ptr ()) (StablePtr (IO ()))
+data Timer     = Timer     (Ptr ()) (StablePtr (IO ()))
+
+class (HasMarshalled a, Marshalled a ~ Ptr (), Marshallable a, Unmarshallable a) => WlcHandle a
+instance WlcHandle Output
+instance WlcHandle View
 
 #ifdef __GLASGOW_HASKELL__
 instance Storable Modifiers where
@@ -224,6 +226,10 @@ instance HasMarshalled ()
 instance Marshallable ()
 instance Unmarshallable ()
 
+instance HasMarshalled EpochTime
+instance Marshallable EpochTime
+instance Unmarshallable EpochTime
+
 instance HasMarshalled (BitSet a) where
   type Marshalled (BitSet a) = Marshalled a
 instance Num (Marshalled a) => Marshallable (BitSet a) where
@@ -234,10 +240,8 @@ instance Integral (Marshalled a) => Unmarshallable (BitSet a) where
 instance HasMarshalled a => HasMarshalled (IO a) where
   type Marshalled (IO a) = IO (Marshalled a)
 instance Marshallable a => Marshallable (IO a) where
-  --marshal = (marshal =<<)
   marshal = fmap marshal
 instance Unmarshallable a => Unmarshallable (IO a) where
-  --unmarshal = return . unmarshal
   unmarshal = fmap unmarshal
 
 instance HasMarshalled (a -> b) where
@@ -261,6 +265,13 @@ instance Marshallable (StablePtr a) where
   marshal = return . castStablePtrToPtr
 instance Unmarshallable (StablePtr a) where
   unmarshal = return . castPtrToStablePtr
+
+instance HasMarshalled Handle where
+  type Marshalled Handle = Fd
+instance Marshallable Handle where
+  marshal = handleToFd
+instance Unmarshallable Handle where
+  unmarshal = fdToHandle
 
 #let structMarshal t = "instance HasMarshalled %s where type Marshalled %s = Ptr %s\ninstance Unmarshallable %s where unmarshal = peek", #t, #t, #t, #t
 #structMarshal Modifiers
