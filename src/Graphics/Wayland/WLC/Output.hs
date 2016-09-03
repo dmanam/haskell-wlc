@@ -29,7 +29,10 @@ getOutputs = fmap Output <$> getArrayFn c_getOutputs
 
 foreign import ccall safe "wlc_get_focused_output" getFocusedOutput :: IO Output
 
-foreign import ccall safe "wlc_output_focus" setFocusedOutput :: Output -> IO ()
+foreign import ccall safe "wlc_output_focus" c_setFocusedOutput :: Ptr () -> IO ()
+setFocusedOutput :: Maybe Output -> IO ()
+setFocusedOutput Nothing  = c_setFocusedOutput nullPtr
+setFocusedOutput (Just o) = c_setFocusedOutput $ unOutput o
 
 $(marshalImport "wlc_output_get_name" "getOutputName" [t|Output -> IO String|])
 

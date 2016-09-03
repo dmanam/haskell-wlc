@@ -17,11 +17,11 @@ module Graphics.Wayland.WLC.Types
   , Modifiers(..), FileEvent, Timer, XkbState, XkbKeymap, Input, Output, View
   , BitSet, fromMaskList, bitContains
   , module X
-  , EpochTime
+  , EpochTime, ProcessID
   ) where
 
 import Graphics.Wayland.WLC.Types.Internal
 
 import Graphics.Wayland.WLC.Geometry as X
 
-import System.Posix.Types (EpochTime)
+import System.Posix.Types (EpochTime, ProcessID)
