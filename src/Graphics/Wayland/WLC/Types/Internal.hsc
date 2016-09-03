@@ -150,6 +150,8 @@ type IntEnum = Word32
 type Key     = Word32
 type Button  = Word32
 type Slot    = Word32
+type Scale   = Word32
+type MsTime  = Int32
 
 newtype ScrollAmount = ScrollAmount { unScrollAmount :: (Double, Double) }
 

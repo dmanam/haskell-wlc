@@ -67,8 +67,8 @@ foreign import ccall safe "wrapper" timerHelperWrapper :: (Ptr () -> IO Int) -> 
 timerHelper :: FunPtr (Ptr () -> IO Int)
 timerHelper = unsafePerformIO $ timerHelperWrapper runPtr
 
-foreign import ccall safe "wlc_event_source_timer_update" c_timerUpdate :: Ptr () -> Int32 -> IO Bool
-timerUpdate :: Timer -> Int32 -> IO Bool
+foreign import ccall safe "wlc_event_source_timer_update" c_timerUpdate :: Ptr () -> MsTime -> IO Bool
+timerUpdate :: Timer -> MsTime -> IO Bool
 timerUpdate (Timer es _) = c_timerUpdate es
 
 foreign import ccall safe "wlc_event_source_remove" c_removeEventSource :: Ptr () -> IO ()
