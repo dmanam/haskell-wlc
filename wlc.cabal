@@ -20,6 +20,7 @@ library
                        Graphics.Wayland.WLC.Callbacks
                        Graphics.Wayland.WLC.Core
                        Graphics.Wayland.WLC.Geometry
+                       Graphics.Wayland.WLC.Output
                        Graphics.Wayland.WLC.Types
   other-modules:       Graphics.Wayland.WLC.Callbacks.TH
                        Graphics.Wayland.WLC.Internal.TH
