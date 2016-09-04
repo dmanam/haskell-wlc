@@ -16,7 +16,7 @@ source-repository head
   location:            https://github.com/dlahoti/haskell-wlc.git
 
 library
-  exposed-modules:     Graphics.Wayland.WLC,
+  exposed-modules:     Graphics.Wayland.WLC
                        Graphics.Wayland.WLC.Callbacks
                        Graphics.Wayland.WLC.Core
                        Graphics.Wayland.WLC.Geometry
